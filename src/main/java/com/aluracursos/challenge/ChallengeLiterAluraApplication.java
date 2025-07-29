@@ -8,12 +8,13 @@ import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import com.aluracursos.challenge.principal.PrincipalChallenge;
 
-@SpringBootApplication(
-		exclude = {
-				DataSourceAutoConfiguration.class,
-				HibernateJpaAutoConfiguration.class
-		}
-)
+@SpringBootApplication
+//		(
+//		exclude = {
+//				DataSourceAutoConfiguration.class,
+//				HibernateJpaAutoConfiguration.class
+//		}
+//)
 public class ChallengeLiterAluraApplication implements CommandLineRunner {
 
 	private final PrincipalChallenge principalChallenge;

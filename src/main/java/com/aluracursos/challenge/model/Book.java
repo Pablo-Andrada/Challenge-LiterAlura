@@ -1,7 +1,16 @@
 // src/main/java/com/aluracursos/challenge/model/Book.java
 package com.aluracursos.challenge.model;
 
-import jakarta.persistence.*;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.ForeignKey;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import java.util.List;
 
 @Entity
@@ -17,11 +26,15 @@ public class Book {
 
     private Integer downloadCount;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne(cascade = jakarta.persistence.CascadeType.ALL)
     private Author author;
 
-    @ElementCollection
-    @CollectionTable(name = "book_subjects", joinColumns = @JoinColumn(name = "book_id"))
+    // Cargamos los subjects en EAGER para que estén disponibles fuera de la sesión
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(
+            name = "book_subjects",
+            joinColumns = @JoinColumn(name = "book_id", foreignKey = @ForeignKey(name = "fk_book_subjects_book"))
+    )
     @Column(name = "subject")
     private List<String> subjects;
 
@@ -76,7 +89,10 @@ public class Book {
     public String toString() {
         return String.format(
                 "Book{id=%d, title='%s', language='%s', downloads=%d, author=%s, subjects=%s}",
-                id, title, language, downloadCount,
+                id,
+                title,
+                language,
+                downloadCount,
                 author != null ? author.getName() : "null",
                 subjects
         );

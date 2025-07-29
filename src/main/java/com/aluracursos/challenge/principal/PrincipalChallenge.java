@@ -4,11 +4,13 @@ package com.aluracursos.challenge.principal;
 import com.aluracursos.challenge.dto.BookDTO;
 import com.aluracursos.challenge.dto.GutendexResponse;
 import com.aluracursos.challenge.model.Book;
+import com.aluracursos.challenge.model.Author;
 import com.aluracursos.challenge.service.ChallengeConsumoAPI;
 import com.aluracursos.challenge.service.PersistenceService;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Scanner;
 
 @Component
@@ -29,11 +31,14 @@ public class PrincipalChallenge {
         int opcion;
         do {
             System.out.println("""
-                1 - Buscar libros
-                2 - Guardar último buscado
-                3 - Listar libros guardados
-                4 - Buscar libros por idioma
-                5 - Salir
+                1  - Buscar libros en API
+                2  - Guardar último buscado
+                3  - Listar libros guardados
+                4  - Buscar libros por idioma
+                5  - Listar autores guardados
+                6  - Listar autores vivos en un año
+                7  - Buscar libros guardados por fragmento de título
+                8  - Salir
                 """);
             opcion = teclado.nextInt();
             teclado.nextLine();
@@ -42,10 +47,13 @@ public class PrincipalChallenge {
                 case 2 -> guardarUltimoBuscado();
                 case 3 -> listarLibrosGuardados();
                 case 4 -> buscarLibrosPorIdioma();
-                case 5 -> System.out.println("Adiós");
+                case 5 -> listarAutoresGuardados();
+                case 6 -> listarAutoresVivos();
+                case 7 -> buscarLibrosGuardadosPorFragmento();
+                case 8 -> System.out.println("Adiós");
                 default -> System.out.println("Opción inválida");
             }
-        } while (opcion != 5);
+        } while (opcion != 8);
     }
 
     private void buscarYMostrarLibros() {
@@ -53,16 +61,12 @@ public class PrincipalChallenge {
         String texto = teclado.nextLine();
         System.out.print("Idioma (es, en, fr…): ");
         String idioma = teclado.nextLine();
-
         try {
             GutendexResponse<BookDTO> resp = api.buscarLibros(texto, idioma, 1);
             System.out.println("Total encontrados: " + resp.count());
-
             for (BookDTO b : resp.results()) {
-                System.out.printf(
-                        "%d – %s (%s), descargas: %d%n",
-                        b.id(), b.title(), b.languages(), b.downloadCount()
-                );
+                System.out.printf("%d – %s (%s), descargas: %d%n",
+                        b.id(), b.title(), b.languages(), b.downloadCount());
                 if (!b.authors().isEmpty()) {
                     var a = b.authors().get(0);
                     System.out.printf("   Autor: %s (%s–%s)%n",
@@ -76,16 +80,9 @@ public class PrincipalChallenge {
                 }
                 System.out.println();
             }
-
-            // Guardamos el primer resultado para la opción 2
-            if (!resp.results().isEmpty()) {
-                lastSearch = resp.results().get(0);
-            } else {
-                lastSearch = null;
-            }
-
+            lastSearch = resp.results().isEmpty() ? null : resp.results().get(0);
         } catch (RuntimeException e) {
-            System.out.println("⚠️ Error al consultar la API: " + e.getMessage());
+            System.out.println("Error al consultar la API: " + e.getMessage());
         }
     }
 
@@ -94,7 +91,7 @@ public class PrincipalChallenge {
             System.out.println("No hay libro para guardar. Primero busca un libro.");
         } else {
             persistenceService.saveBook(lastSearch);
-            System.out.println("✅ Libro guardado: " + lastSearch.title());
+            System.out.println("Libro guardado: " + lastSearch.title());
         }
     }
 
@@ -115,6 +112,38 @@ public class PrincipalChallenge {
             System.out.println("No se encontraron libros en el idioma: " + lang);
         } else {
             libros.forEach(System.out::println);
+        }
+    }
+
+    private void listarAutoresGuardados() {
+        List<Author> autores = persistenceService.listAllAuthors();
+        if (autores.isEmpty()) {
+            System.out.println("No hay autores guardados.");
+        } else {
+            autores.forEach(System.out::println);
+        }
+    }
+
+    private void listarAutoresVivos() {
+        System.out.print("Año para filtrar autores vivos: ");
+        int año = teclado.nextInt(); teclado.nextLine();
+        List<Author> vivos = persistenceService.listAuthorsAliveIn(año);
+        if (vivos.isEmpty()) {
+            System.out.println("No se encontraron autores vivos en " + año);
+        } else {
+            vivos.forEach(System.out::println);
+        }
+    }
+
+    private void buscarLibrosGuardadosPorFragmento() {
+        System.out.print("Fragmento de título a buscar en la base: ");
+        String frag = teclado.nextLine();
+        List<Book> resultados = persistenceService.findBooksByTitleFragment(frag);
+        if (resultados.isEmpty()) {
+            System.out.println("No se encontró ningún libro con: " + frag);
+        } else {
+            System.out.println("Libros hallados:");
+            resultados.forEach(System.out::println);
         }
     }
 }
