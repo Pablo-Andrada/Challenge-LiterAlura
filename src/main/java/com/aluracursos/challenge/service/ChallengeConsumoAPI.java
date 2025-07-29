@@ -19,9 +19,7 @@ import java.time.Duration;
 @Service
 public class ChallengeConsumoAPI {
 
-    // Añadimos la barra al final para evitar redirecciones 301
-    private static final String BASE = "https://gutendex.com/books/";
-
+    private static final String BASE = "https://gutendex.com/books";
     private final HttpClient client;
     private final ObjectMapper mapper = new ObjectMapper();
 
@@ -36,26 +34,25 @@ public class ChallengeConsumoAPI {
                 idioma,
                 pagina
         );
+        System.out.println("▶️ Consultando URI: " + uri);
         return HttpRequest.newBuilder()
                 .GET()
                 .uri(URI.create(uri))
                 .header("Accept", "application/json")
-                // timeout de 10 segundos
                 .timeout(Duration.ofSeconds(10))
                 .build();
     }
 
     public GutendexResponse<BookDTO> buscarLibros(String texto, String idioma, int pagina) {
-        HttpRequest request = buildRequest(texto, idioma, pagina);
         try {
             HttpResponse<String> response =
-                    client.send(request, HttpResponse.BodyHandlers.ofString());
-
+                    client.send(buildRequest(texto, idioma, pagina),
+                            HttpResponse.BodyHandlers.ofString());
+            System.out.println("▶️ Cuerpo recibido: " + response.body());
             int status = response.statusCode();
             if (status < 200 || status >= 300) {
                 throw new RuntimeException("HTTP error: " + status);
             }
-
             return mapper.readValue(
                     response.body(),
                     new TypeReference<GutendexResponse<BookDTO>>() {}

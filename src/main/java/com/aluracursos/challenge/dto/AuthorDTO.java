@@ -1,4 +1,4 @@
-// src/main/java/com/aluracursos/challenge/dto/AuthorDTO.java
+// AuthorDTO.java
 package com.aluracursos.challenge.dto;
 
 public record AuthorDTO(
